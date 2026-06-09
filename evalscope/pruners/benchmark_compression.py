@@ -32,7 +32,7 @@ def extract_score(review_row, score_key):
         return None
 
 
-def load_review_scores(reviews_dir, score_key):
+def load_review_scores(reviews_dir, score_key,file_prefix=None):
     """
     Reads all review jsonl files in a benchmark folder.
 
@@ -41,7 +41,10 @@ def load_review_scores(reviews_dir, score_key):
     aa_lcr__kimi-k2.5.jsonl
     """
     reviews_dir = Path(reviews_dir)
-    files = sorted(reviews_dir.glob("*.jsonl"))
+    if file_prefix:
+        files = sorted(reviews_dir.glob(f"{file_prefix}*.jsonl"))
+    else:
+        files = sorted(reviews_dir.glob("*.jsonl"))
 
     if not files:
         raise FileNotFoundError(f"No .jsonl files found in {reviews_dir}")
@@ -292,12 +295,13 @@ def main():
     parser.add_argument("--reviews-dir", required=True, help="Directory containing review jsonl files.")
     parser.add_argument("--benchmark-name", required=True, help="Name to store in the output report.")
     parser.add_argument("--score-key", required=True, help="Score key, for example pass or acc.")
+    parser.add_argument("--file-prefix", default=None, help="Only read review files matching this prefix.")
     parser.add_argument("--target-size", type=int, required=True, help="Number of samples to keep.")
     parser.add_argument("--output", required=True, help="Output JSON file path.")
 
     args = parser.parse_args()
 
-    sample_scores, _ = load_review_scores(args.reviews_dir, args.score_key)
+    sample_scores, _ = load_review_scores(args.reviews_dir, args.score_key, args.file_prefix)
     features = build_sample_features(sample_scores)
 
     selected = prune_samples(features, args.target_size)
